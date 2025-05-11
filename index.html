@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bedroom Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  </head>
+  <body>
+    <header>
+      
+      <div class="user-profile">
+          <h3 id="current-time"></h3>
+          <h3 id="current-date"></h3>
+      </div>
+    </header>
+
+
+    <main class="content" id="content">
+        <div id="bedroom-page" class="bedroom-background" style="padding: 10px;">
+            <div class="widget-container" style="margin-top: 10px;">
+              <div class="widget-bedroom">
+                <h3>Temperature: <span id="nhietdo"></span>°C</h3>
+                <img src="nhietdo.png" class="widget-icon" alt="Temperature Icon" />
+
+            </div>
+                <div class="widget-bedroom">
+                  
+                  <h3>Humidity: <span id="doam"></span>%</h3>
+                  <img src="doam.png" class="widget-icon" alt="Humidity Icon" />
+                </div>
+                  <div class="widget-bedroom">
+                  <h3>Dust: <span id="buimin"></span>mg/m3</h3>
+                  <img src="buimin.png" class="widget-icon" alt="Humidity Icon" />
+                </div>
+                
+            </div>
+
+            <div class="widget-container" style="margin-top: 20px;;">
+              <div class="widget-chart" style="height: px;">
+               <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/2691451/charts/1?average=10&bgcolor=%23ffffff&color=%23d62020&days=1&dynamic=false&results=3600&title=Temperature&type=line&yaxismax=50&yaxismin=0"></iframe>
+              </div>
+              <div class="widget-chart">   
+<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/2691451/charts/2?average=10&bgcolor=%23ffffff&color=%23d62020&days=1&dynamic=true&results=3600&title=Humidity&type=line&yaxismax=90&yaxismin=20"></iframe>
+              </div>
+              <div class="widget-chart">
+<iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/2691451/charts/3?average=10&bgcolor=%23ffffff&color=%23d62020&days=1&dynamic=true&results=3600&title=Dust&type=line"></iframe>
+              </div>
+          </div>
+          <div class="widget-container" style="margin-top: 70px;">
+            <div class="widget-device" style="background-color: whitesmoke;">
+              <img id="imgd" src="" class="widget-img" alt="Light Icon" />
+              <div>
+                <button style="margin-left: 70px ;" type="button" id="don" class="dev-btn">ON</button>
+                <button style="margin-left: 40px;" type="button" id="doff" class="dev-btn">OFF</button>
+              </div>
+            </div>
+            <div class="widget-device" style="background-color: whitesmoke;">
+              <img id="imgdh" src="" class="widget-img" alt="Temperature Icon" />
+              <div>
+                <button style="margin-left: 70px ;" type="button" id="dhon" class="dev-btn">ON</button>
+                <button style="margin-left: 40px;" type="button" id="dhoff" class="dev-btn">OFF</button>
+              </div>
+            </div>
+            <div class="widget-device" style="background-color: whitesmoke;">
+              
+              <div>
+                <img id="imgkk" src="" class="widget-img" alt="Humidity Icon" />
+              </div>
+              <div>
+                <button style="margin-left: 70px ;" type="button" id="kkon" class="dev-btn" >ON</button>
+                <button style="margin-left: 40px;" type="button" id="kkoff" class="dev-btn">OFF</button>
+              </div>
+              
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+         <!-- The core Firebase JS SDK is always required and must be listed first -->
+    
+    <!-- //Remember to add this ...database line in your code unless it will not work -->
+    
+    <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-database.js"></script>
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+         https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-analytics.js"></script>
+    <!-- lien ket voi functions.js -->
+    
+    
+    <script>
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+      apiKey: "AIzaSyBpPYuInq9aazvDD6ot28p4IT5kQwzYtk0",
+      authDomain: "smart-city-60734.firebaseapp.com",
+      databaseURL: "https://smart-city-60734-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "smart-city-60734",
+      storageBucket: "smart-city-60734.appspot.com",
+      messagingSenderId: "1010715793912",
+      appId: "1:1010715793912:web:b8e111bd511e3f224fde0d",
+      measurementId: "G-RBYNFN4BX2"
+    };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+      
+      //functions
+      // make sure that the name in ' ' match with name of your database child
+      var nhietDo = document.getElementById('nhietdo');
+      var dbRef1 = firebase.database().ref('sensor').child('temperature');
+      var doAm = document.getElementById('doam');
+      var dbRef2 = firebase.database().ref('sensor').child('humidity');  
+      var buimin = document.getElementById('buimin');
+      var dbRef3 = firebase.database().ref('sensor').child('dust');
+
+      // ThingSpeak API details
+      var apiKey = '8940FGAS6JH3K7F6'; 
+      var url = 'https://api.thingspeak.com/update';
+
+      // Hàm để gửi dữ liệu lên ThingSpeak
+      function updateThingSpeak(temp, humidity, dust) {
+          fetch(`${url}?api_key=${apiKey}&field1=${temp}&field2=${humidity}&field3=${dust}`, {
+              method: 'GET'
+          })
+          .then(response => response.text())
+          .then(data => console.log('ThingSpeak update successful:', data))
+          .catch(error => console.error('Error updating ThingSpeak:', error));
+      }
+
+
+      // Lắng nghe sự thay đổi trong Firebase và cập nhật ThingSpeak
+      dbRef1.on('value', snap => {
+          var temperature = snap.val();
+          nhietDo.innerText = temperature;
+          updateThingSpeak(temperature, doAm.innerText, buimin.innerText); // Gửi cả 3 giá trị hiện tại
+      });
+
+      dbRef2.on('value', snap => {
+          var humidity = snap.val();
+          doAm.innerText = humidity;
+          updateThingSpeak(nhietDo.innerText, humidity, buimin.innerText); // Gửi cả 3 giá trị hiện tại
+      });
+
+      dbRef3.on('value', snap => {
+          var dust = snap.val();
+          buimin.innerText = dust;
+          updateThingSpeak(nhietDo.innerText, doAm.innerText, dust); // Gửi cả 3 giá trị hiện tại
+      });
+
+      function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleTimeString();
+      document.getElementById('current-date').textContent = now.toLocaleDateString();
+      }
+
+      setInterval(updateTime, 1000); 
+      updateTime(); 
+      
+      //May Loc Khong Khi
+      let kk1 = document.querySelector('#kkon');
+      let kk_img = document.getElementById('imgkk');
+      let kk0 = document.querySelector('#kkoff');
+
+      // functions nut bam
+      kk1.addEventListener('click', ()=>{
+        firebase.database().ref("device").child('AirPur').set(1)  
+        kk_img.src = 'kk1.gif';   
+      });
+
+      kk0.addEventListener('click', ()=>{
+        firebase.database().ref("device").child('AirPur').set(0)  
+        kk_img.src = 'kk0.png';
+      });
+      //Dieu hoa
+      let dh1 = document.querySelector('#dhon');
+      let dh_img = document.querySelector('#imgdh');
+      let dh0 = document.querySelector('#dhoff');
+
+      // functions nut bam
+      dh1.addEventListener('click', ()=>{
+        firebase.database().ref("device").child('AirCon').set(1)  
+          dh_img.src = 'dh1.png';   
+      });
+
+      dh0.addEventListener('click', ()=>{
+        firebase.database().ref("device").child('AirCon').set(0)  
+          dh_img.src = 'dh0.png';
+      });
+      //Den
+      let d1 = document.querySelector('#don');
+      let d_img = document.querySelector('#imgd');
+      let d0 = document.querySelector('#doff');
+
+      // functions nut bam
+      d1.addEventListener('click', ()=>{
+        firebase.database().ref("device").child('Light').set(1) 
+          d_img.src = 'den1.gif';   
+      });
+
+      d0.addEventListener('click', ()=>{
+        firebase.database().ref("device").child('Light').set(0)
+          d_img.src = 'den0.png';
+      });
+      firebase.database().ref("device").child("Light").on('value', function (snapshot) {
+        var state = snapshot.val();
+        console.log('Den: ', state);
+        if (state === 1) {
+          d_img.src = 'den1.gif';
+        } else {
+          d_img.src = 'den0.png';
+        }
+      });
+      firebase.database().ref("device").child("AirCon").on('value', function (snapshot) {
+        var state = snapshot.val();
+        console.log('Dieu hoa: ', state);
+        if (state === 1) {
+          dh_img.src = 'dh1.png';
+        } else {
+          dh_img.src = 'dh0.png';
+        }
+      });
+      firebase.database().ref("device").child("AirPur").on('value', function (snapshot) {
+        var state = snapshot.val();
+        console.log('May loc khong khi: ', state);
+        if (state === 1) {
+          kk_img.src = 'kk1.gif';
+        } else {
+          kk_img.src = 'kk0.png';
+        }
+      });
+    </script>
+  </body>
+  
+
+
+</html>
